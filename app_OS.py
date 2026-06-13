@@ -51,9 +51,10 @@ TICKET_TYPES  = ["Problema Técnico", "Reclamação", "Solicitação de reembols
 @st.cache_resource(show_spinner="Carregando modelo de IA...")
 def load_model():
     try:
-        from os_classifier import carregar_artefatos
-        return carregar_artefatos()
+        from os_classifier import load_artifacts
+        return load_artifacts()
     except Exception as e:
+        st.error(f"Erro ao carregar modelo: {e}")
         return None, None, None
 
 model, encoder, le = load_model()
