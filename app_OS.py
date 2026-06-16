@@ -3,30 +3,102 @@ import pandas as pd
 from datetime import datetime
 import uuid
 
+# ── Configuração de Página Executiva ──────────────────────────────────────────
 st.set_page_config(
-    page_title="Telecontrol — Priorização de OS",
-    page_icon="🎯",
+    page_title="Telecontrol — AI Priority Core",
+    page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── Estilo global ──────────────────────────────────────────────────────────────
+# ── CSS High-End (Estética SaaS Enterprise) ──────────────────────────────────
 st.markdown("""
 <style>
-    .ticket-card { border-radius:8px; padding:14px 18px; margin-bottom:10px; border-left-width:5px; border-left-style:solid; }
-    .badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:700; margin-right:6px; }
-    .metric-box { text-align:center; padding:12px; border-radius:8px; }
-    section[data-testid="stSidebar"] { background:#f8f9fa; }
-    div[data-testid="stExpander"] { border:1px solid #dee2e6; border-radius:8px; margin-bottom:8px; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    /* Reset de Fonte Global */
+    html, body, [data-testid="stAppViewContainer"], .main {
+        font-family: 'Inter', sans-serif !important;
+        background-color: #F8FAFC;
+    }
+    
+    /* Sidebar Profissional */
+    section[data-testid="stSidebar"] {
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E2E8F0;
+    }
+    
+    /* Cards de Métricas Analíticas */
+    .metric-container {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 16px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border-top: 4px solid #CBD5E1;
+    }
+    .metric-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1E293B;
+        line-height: 1.2;
+    }
+    .metric-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748B;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+    }
+    
+    /* Card de Ticket Estilo Central de Atendimento */
+    .ticket-card {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        transition: transform 0.15s ease;
+    }
+    .ticket-card:hover {
+        border-color: #CBD5E1;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    
+    /* Sistema de Badges Técnicos */
+    .custom-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        background-color: #F1F5F9;
+        color: #475569;
+        border: 1px solid #E2E8F0;
+        margin-right: 6px;
+    }
+    .badge-law {
+        background-color: #FEF3C7;
+        color: #92400E;
+        border: 1px solid #FDE68A;
+    }
+    
+    /* Customização de Input/Botões do Streamlit */
+    div[data-testid="stForm"] {
+        border: none !important;
+        padding: 0 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Configurações de prioridade ────────────────────────────────────────────────
+# ── Configurações de Identidade Visual Corporativa ───────────────────────────
 PRIORITY_CFG = {
-    "Urgente": {"color":"#DC3545","bg":"#FFF5F5","icon":"🔴","order":0},
-    "Alta":    {"color":"#FD7E14","bg":"#FFF8F0","icon":"🟠","order":1},
-    "Média":   {"color":"#D4A017","bg":"#FFFCF0","icon":"🟡","order":2},
-    "Baixa":   {"color":"#28A745","bg":"#F0FFF4","icon":"🟢","order":3},
+    "Urgente": {"color": "#9B1C1C", "border": "#E02424", "bg": "#FDF2F2", "label": "CRITICAL / URGENT"},
+    "Alta":    {"color": "#B45309", "border": "#D97706", "bg": "#FEF3C7", "label": "HIGH PRIORITY"},
+    "Média":   {"color": "#1E40AF", "border": "#2563EB", "bg": "#EFF6FF", "label": "MEDIUM"},
+    "Baixa":   {"color": "#065F46", "border": "#059669", "bg": "#ECFDF5", "label": "LOW"},
 }
 
 PRODUCTS = sorted([
@@ -44,56 +116,61 @@ PRODUCTS = sorted([
     "Xbox Series X","Outro",
 ])
 
-CHANNELS      = ["Telefone", "Chat", "Email"]
-TICKET_TYPES  = ["Problema Técnico", "Reclamação", "Solicitação de reembolso", "Cancelamento", "Dúvida"]
+CHANNELS     = ["Telefone", "Chat", "Email"]
+TICKET_TYPES = ["Problema Técnico", "Reclamação", "Solicitação de reembolso", "Cancelamento", "Dúvida"]
 
-# ── Carregar modelo (cache) ────────────────────────────────────────────────────
-@st.cache_resource(show_spinner="Carregando modelo de IA...")
+# ── Carregamento do Pipeline de IA ───────────────────────────────────────────
+@st.cache_resource(show_spinner="Inicializando Engine de Triagem Inteligente...")
 def load_model():
     try:
-        from os_classifier import load_artifacts
-        return load_artifacts()
-    except Exception as e:
-        st.error(f"Erro ao carregar modelo: {e}")
+        from os_classifier import carregar_artefatos
+        return carregar_artefatos()
+    except Exception:
         return None, None, None
 
 model, encoder, le = load_model()
 
-# ── Estado da sessão ───────────────────────────────────────────────────────────
 if "tickets" not in st.session_state:
     st.session_state.tickets = []
 
-# ── SIDEBAR — Formulário de nova OS ───────────────────────────────────────────
+# ── SIDEBAR — Entrada de Ordens de Serviço ───────────────────────────────────
 with st.sidebar:
-    st.markdown("## 📋 Nova Ordem de Serviço")
+    st.markdown("<h3 style='color:#0F172A;font-weight:700;margin-bottom:4px;'>Input de Chamados</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#64748B;font-size:13px;margin-bottom:24px;'>Simulação de entrada via Posto Autorizado ou API</p>", unsafe_allow_html=True)
+    
     if model is None:
-        st.error("Modelo não encontrado. Execute `python os_classifier.py` para treinar antes de usar o app.")
+        st.error("Engine indisponível. Execute o treinamento do modelo (`os_classifier.py`) antes de iniciar.")
     
     with st.form("nova_os", clear_on_submit=True):
-        product  = st.selectbox("Produto / Equipamento", PRODUCTS)
-        subject  = st.text_input("Assunto", placeholder="Ex: Geladeira com faísca elétrica")
-        desc     = st.text_area("Descrição do problema", placeholder="Descreva o que está acontecendo...", max_chars=200, height=100)
-        channel  = st.selectbox("Canal de atendimento", CHANNELS)
-        ttype    = st.selectbox("Tipo do chamado", TICKET_TYPES)
-        age      = st.number_input("Idade do cliente", min_value=18, max_value=85, value=35, step=1)
-        submitted = st.form_submit_button("🚀 Classificar e Abrir OS", use_container_width=True, type="primary")
+        product = st.selectbox("Equipamento / Produto afetado", PRODUCTS)
+        subject = st.text_input("Sumário do Incidente", placeholder="Ex: Vazamento de gás no duto traseiro")
+        desc    = st.text_area("Descrição Técnica do Defeito", placeholder="Relato completo do cliente final...", max_chars=200, height=100)
+        
+        c_left, c_right = st.columns(2)
+        channel = c_left.selectbox("Origem / Canal", CHANNELS)
+        ttype   = c_right.selectbox("Categoria", TICKET_TYPES)
+        age     = st.number_input("Idade do Titular", min_value=18, max_value=85, value=35, step=1)
+        
+        st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
+        submitted = st.form_submit_button("Analisar e Enfileirar OS", use_container_width=True, type="primary")
 
     if submitted:
         if not subject.strip() or not desc.strip():
-            st.error("Preencha o assunto e a descrição antes de abrir o chamado.")
+            st.error("Campos compulsórios (Sumário e Descrição) ausentes.")
         elif model is None:
-            st.error("Modelo indisponível. Treine o modelo primeiro.")
+            st.error("Pipeline offline.")
         else:
             from os_classifier import predict_new_ticket
             ticket_data = {
                 "Product_Purchased": product,
                 "Ticket_Type":       ttype,
                 "Ticket_Subject":    subject,
-                "Ticket_Description":desc,
+                "Ticket_Description": desc,
                 "Ticket_Channel":    channel,
                 "Customer_Age":      int(age),
             }
-            with st.spinner("Classificando..."):
+            
+            with st.spinner("Iniciando inferência..."):
                 result = predict_new_ticket(ticket_data, model, encoder, le)
 
             ticket = {
@@ -106,105 +183,100 @@ with st.sidebar:
                 "age":         int(age),
                 "priority":    result["priority"],
                 "confidence":  result["confidence"],
-                "distribution":result["distribution"],
+                "distribution": result["distribution"],
                 "opened_at":   datetime.now(),
             }
             st.session_state.tickets.append(ticket)
-            cfg = PRIORITY_CFG[result["priority"]]
-            st.success(f"{cfg['icon']} OS **#{ticket['id']}** aberta como **{result['priority']}** ({result['confidence']:.0%} de confiança)")
             st.rerun()
 
     if st.session_state.tickets:
-        st.divider()
-        if st.button("🗑️ Limpar todas as OS", use_container_width=True):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Limpar Fila de Operações", use_container_width=True):
             st.session_state.tickets = []
             st.rerun()
 
-# ── MAIN — Dashboard ──────────────────────────────────────────────────────────
-st.title("🎯 Dashboard de Priorização de OS")
-st.caption("Chamados urgentes aparecem no topo. Dentro de cada nível: mais antigos primeiro, depois por confiança decrescente.")
+# ── CORPO PRINCIPAL — Dashboard de Governança e Operações ─────────────────────
+st.markdown("<h1 style='color:#0F172A; font-weight:700; padding-bottom:0px; margin-bottom:0px;'>Smart OS Prioritizer</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color:#64748B; font-size:14px; margin-top:0px;'>Painel Operacional de Monitoramento de Demanda Core — Telecontrol Business Intelligence</p>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
 if not st.session_state.tickets:
-    st.info("Nenhuma OS aberta ainda. Use o formulário na barra lateral para criar um chamado.")
+    st.info("Fila limpa. Aguardando novas requisições na barra lateral para triagem em tempo real.")
     st.stop()
 
 df = pd.DataFrame(st.session_state.tickets)
 df["opened_at"] = pd.to_datetime(df["opened_at"])
 
-# ── Contadores por prioridade ──────────────────────────────────────────────────
-c1, c2, c3, c4 = st.columns(4)
-for col, priority in zip([c1, c2, c3, c4], ["Urgente", "Alta", "Média", "Baixa"]):
-    cfg   = PRIORITY_CFG[priority]
+# ── Painel de Volumetria Analítica (Grid Executivo) ───────────────────────────
+cols = st.columns(4)
+for col, priority in zip(cols, ["Urgente", "Alta", "Média", "Baixa"]):
+    cfg = PRIORITY_CFG[priority]
     count = len(df[df["priority"] == priority])
     col.markdown(
-        f"""<div class="metric-box" style="background:{cfg['bg']};border:1px solid {cfg['color']}20;">
-        <div style="font-size:28px;">{cfg['icon']}</div>
-        <div style="font-size:22px;font-weight:700;color:{cfg['color']};">{count}</div>
-        <div style="font-size:13px;color:#666;">{priority}</div>
+        f"""<div class="metric-container" style="border-top-color:{cfg['color']};">
+            <div class="metric-value">{count}</div>
+            <div class="metric-label">{cfg['label']}</div>
         </div>""",
         unsafe_allow_html=True,
     )
 
-st.divider()
+st.markdown("<br><h4 style='color:#1E293B; font-weight:600;'>Fila de Despacho Dinâmico (SLA)</h4>", unsafe_allow_html=True)
 
-# ── Seções por prioridade ──────────────────────────────────────────────────────
+# ── Renderização Estruturada da Fila por Criticidade ─────────────────────────
 for priority in ["Urgente", "Alta", "Média", "Baixa"]:
-    cfg    = PRIORITY_CFG[priority]
+    cfg = PRIORITY_CFG[priority]
     subset = df[df["priority"] == priority].copy()
 
     if subset.empty:
         continue
 
-    # Ordenação: mais antigo primeiro → maior confiança primeiro
-    subset = subset.sort_values(
-        ["opened_at", "confidence"],
-        ascending=[True, False],
-    )
+    # Regra de Negócio: Ordenação cronológica estrita com desempate por confiança algorítmica
+    subset = subset.sort_values(["opened_at", "confidence"], ascending=[True, False])
 
-    expanded = priority in ["Urgente", "Alta"]
-    with st.expander(f"{cfg['icon']} **{priority}** — {len(subset)} chamado(s)", expanded=expanded):
+    with st.expander(f"📌 {cfg['label']} ({len(subset)} pendentes)", expanded=(priority in ["Urgente", "Alta"])):
         for _, t in subset.iterrows():
-            elapsed  = datetime.now() - t["opened_at"].to_pydatetime()
-            mins     = int(elapsed.total_seconds() // 60)
-            secs     = int(elapsed.total_seconds() % 60)
-            time_str = f"{mins}min {secs}s" if mins < 60 else f"{mins // 60}h {mins % 60}min"
-            desc_preview = t["description"][:130] + ("..." if len(t["description"]) > 130 else "")
-
-            # Badges do canal e tipo
-            badges = (
-                f'<span class="badge" style="background:#e9ecef;color:#495057;">{t["channel"]}</span>'
-                f'<span class="badge" style="background:#e9ecef;color:#495057;">{t["ticket_type"]}</span>'
-                f'<span class="badge" style="background:#e9ecef;color:#495057;">{t["age"]} anos</span>'
+            elapsed = datetime.now() - t["opened_at"].to_pydatetime()
+            mins = int(elapsed.total_seconds() // 60)
+            secs = int(elapsed.total_seconds() % 60)
+            time_str = f"{mins}m {secs}s" if mins < 60 else f"{mins // 60}h {mins % 60}m"
+            
+            # Formatação estruturada de metadados
+            badges_html = (
+                f'<span class="custom-badge">{t["channel"]}</span>'
+                f'<span class="custom-badge">{t["ticket_type"]}</span>'
+                f'<span class="custom-badge">{t["age"]} Anos</span>'
             )
             if t["age"] >= 60:
-                badges += '<span class="badge" style="background:#FFF3CD;color:#856404;">⚖️ Lei 10.741</span>'
+                badges_html += '<span class="custom-badge badge-law">⚖️ Estatuto do Idoso</span>'
 
+            # Card Renderizado via CSS Avançado
             st.markdown(
-                f"""<div class="ticket-card" style="background:{cfg['bg']};border-left-color:{cfg['color']};">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                f"""<div class="ticket-card" style="border-left: 5px solid {cfg['color']};">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div>
-                        <span style="font-size:13px;color:#6c757d;">#{t['id']}</span>
-                        <strong style="font-size:16px;margin-left:8px;">{t['subject']}</strong>
+                        <span style="font-family:monospace; font-size:12px; color:#94A3B8; font-weight:600;">ID: #{t['id']}</span>
+                        <span style="font-size:15px; font-weight:600; color:#1E293B; margin-left:12px;">{t['subject']}</span>
                     </div>
-                    <div style="text-align:right;min-width:140px;">
-                        <div style="color:{cfg['color']};font-weight:700;font-size:15px;">{t['confidence']:.0%} confiança</div>
-                        <div style="color:#999;font-size:12px;">Aberto há {time_str}</div>
+                    <div style="text-align:right;">
+                        <span style="background:{cfg['bg']}; color:{cfg['color']}; font-size:12px; font-weight:700; padding:3px 8px; border-radius:4px; border:1px solid {cfg['border']}40;">
+                            {t['confidence']:.1%} CONFIDENCE
+                        </span>
+                        <div style="color:#64748B; font-size:11px; margin-top:6px; font-weight:500;">Aberto há {time_str}</div>
                     </div>
                 </div>
-                <div style="margin:6px 0;">{badges}</div>
-                <div style="font-size:13px;color:#666;margin-top:4px;">
-                    <strong>{t['product']}</strong> · {desc_preview}
+                <div style="margin:8px 0 10px 0;">{badges_html}</div>
+                <div style="font-size:13px; color:#475569; line-height:1.5; border-top:1px solid #F1F5F9; padding-top:8px;">
+                    <strong style="color:#0F172A;">{t['product']}</strong> — {t['description']}
                 </div>
                 </div>""",
                 unsafe_allow_html=True,
             )
 
-            # Detalhe da distribuição de probabilidade (expansível)
-            with st.expander(f"Ver distribuição completa — #{t['id']}", expanded=False):
+            # Distribuição de Probabilidades Multiclasse (Mecanismo de Explicabilidade)
+            with st.expander(f"Ver probabilidade vetorial — #{t['id']}", expanded=False):
                 dist = t["distribution"]
                 for p, prob in sorted(dist.items(), key=lambda x: x[1], reverse=True):
                     pcfg = PRIORITY_CFG[p]
-                    st.markdown(
-                        f"{pcfg['icon']} **{p}**",
-                    )
-                    st.progress(prob, text=f"{prob:.1%}")
+                    col_lbl, col_bar = st.columns([1, 4])
+                    col_lbl.markdown(f"<span style='font-size:12px; font-weight:600; color:#475569;'>{p}</span>", unsafe_allow_html=True)
+                    col_bar.progress(prob)
