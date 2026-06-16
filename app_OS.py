@@ -120,12 +120,12 @@ CHANNELS     = ["Telefone", "Chat", "Email"]
 TICKET_TYPES = ["Problema Técnico", "Reclamação", "Solicitação de reembolso", "Cancelamento", "Dúvida"]
 
 # ── Carregamento do Pipeline de IA ───────────────────────────────────────────
-@st.cache_resource(show_spinner="Inicializando Engine de Triagem Inteligente...")
+@st.cache_resource(show_spinner="Carregando modelo de IA...")
 def load_model():
     try:
-        from os_classifier import carregar_artefatos
-        return carregar_artefatos()
-    except Exception:
+        from os_classifier import load_artifacts 
+        return load_artifacts()              
+    except Exception as e:
         return None, None, None
 
 model, encoder, le = load_model()
